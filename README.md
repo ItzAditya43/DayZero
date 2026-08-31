@@ -16,7 +16,11 @@ It is not a dashboard and not a forecast. It answers one question:
 > *When does this place run out of water, and what is the cheapest way to buy
 > those months back?*
 
-Built for **NextStep Hacks 2026** · *Earth Forward*.
+**Live: [dayzero-cuy1.onrender.com](https://dayzero-cuy1.onrender.com)**
+· Built for **NextStep Hacks 2026** · *Earth Forward*.
+
+> The free instance sleeps after 15 minutes of inactivity. If the first load
+> hangs, give it ~50 seconds to wake.
 
 ---
 
