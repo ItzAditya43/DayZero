@@ -33,6 +33,8 @@ export default function App() {
   const [adv, setAdv] = useState<AdversarialResponse | null>(null);
 
   const [busy, setBusy] = useState<string | null>(null);
+  const [brief, setBrief] = useState<OptimizeResponse["brief"] | null>(null);
+  const [briefBusy, setBriefBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<Place[]>([]);
@@ -103,12 +105,22 @@ export default function App() {
       if (kind === "sim") {
         setOpt(null);
         setAdv(null);
+        setBrief(null);
         setSim(await api.simulate(spec, scenarioSpec, HORIZON));
       } else if (kind === "opt") {
         setAdv(null);
+        setBrief(null);
         const r = await api.optimize(spec, scenarioSpec, budgetCr * 1e7, HORIZON);
         setOpt(r);
         setSim({ result: r.optimization.baseline.result, bottleneck: r.bottleneck });
+        // Fire and forget: the plan is already on screen, and a slow or
+        // unavailable model must never hold up the numbers.
+        setBriefBusy(true);
+        api
+          .brief(spec, scenarioSpec, budgetCr * 1e7, HORIZON)
+          .then((b) => setBrief(b.brief))
+          .catch(() => setBrief(null))
+          .finally(() => setBriefBusy(false));
       } else {
         setOpt(null);
         const r = await api.adversarial(spec, budgetCr * 1e7, HORIZON);
@@ -318,7 +330,9 @@ export default function App() {
           )}
           {adv && <AdversarialCard adv={adv} />}
           {optimization && <PlanCard opt={optimization} />}
-          {opt?.brief && <BriefCard brief={opt.brief} />}
+          {opt && (briefBusy || brief) && (
+            <BriefCard brief={brief} busy={briefBusy} />
+          )}
         </aside>
       </div>
     </div>
@@ -694,12 +708,39 @@ function Row({
   );
 }
 
-function BriefCard({ brief }: { brief: NonNullable<OptimizeResponse["brief"]> }) {
+function BriefCard({
+  brief,
+  busy,
+}: {
+  brief: OptimizeResponse["brief"] | null;
+  busy: boolean;
+}) {
+  if (!brief) {
+    return (
+      <section className="panel p-3.5">
+        <div className="label mb-2.5">Decision brief</div>
+        <div className="space-y-2">
+          {[100, 88, 94, 62].map((w, i) => (
+            <div
+              key={i}
+              className={`h-2.5 rounded bg-slate-800 ${busy ? "pulsing" : ""}`}
+              style={{ width: `${w}%` }}
+            />
+          ))}
+        </div>
+        <div className="mt-3 text-[10px] text-slate-600">
+          {busy ? "Writing the brief…" : "Brief unavailable."}
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="panel p-3.5">
       <div className="flex justify-between items-baseline mb-2.5">
         <span className="label">Decision brief</span>
-        <span className="mono text-[9px] text-slate-600 uppercase">{brief.source}</span>
+        <span className="mono text-[9px] text-slate-600 uppercase">
+          {brief.model ?? brief.source}
+        </span>
       </div>
       <p className="text-xs text-slate-100 leading-relaxed mb-3">{brief.headline}</p>
       <p className="text-[11px] text-slate-400 leading-relaxed mb-3">{brief.situation}</p>

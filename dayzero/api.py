@@ -237,24 +237,64 @@ def simulate_endpoint(req: SimRequest) -> dict:
     }
 
 
-@app.post("/api/optimize")
-def optimize_endpoint(req: OptimizeRequest) -> dict:
-    r = get_region(req)
-    sc = resolve_scenario(req.scenario)
-    forcing = build_forcing(r.climate, sc, req.months)
-    opt = optimize(r, forcing, req.budget, sc.demand_growth_pct, req.months)
+@lru_cache(maxsize=32)
+def _optimized(
+    lat: float, lon: float, radius: float, label: str, pop: float,
+    rain_pct: float, temp: float, growth: float, budget: float, months: int,
+) -> dict:
+    """Everything except the brief, memoised on the exact request.
 
-    payload = {
+    The brief is fetched separately, and re-deriving a 300-candidate search to
+    write two paragraphs about it would double the wait on a small instance.
+    Keyed on primitives so it is hashable.
+    """
+    r = _region(lat, lon, radius, label, pop)
+    sc = Scenario("custom", "Custom scenario", "", rain_pct, temp, growth)
+    forcing = build_forcing(r.climate, sc, months)
+    opt = optimize(r, forcing, budget, growth, months)
+    return {
         "region": r.summary(),
         "scenario": sc.to_dict(),
         "optimization": opt,
-        "bottleneck": adversarial.diagnose(
-            simulate(r, forcing, Plan(), sc.demand_growth_pct, req.months)
-        ),
+        "bottleneck": adversarial.diagnose(simulate(r, forcing, Plan(), growth, months)),
+        "selected_buildings": opt["optimal"]["plan"]["building_ids"],
     }
-    payload["selected_buildings"] = opt["optimal"]["plan"]["building_ids"]
+
+
+def _optimize_payload(req: "OptimizeRequest") -> dict:
+    sc = resolve_scenario(req.scenario)
+    try:
+        payload = _optimized(
+            round(req.lat, 5), round(req.lon, 5), float(req.radius_m),
+            req.label or "", float(req.population or 0.0),
+            sc.rain_percentile, sc.temp_anomaly_c, sc.demand_growth_pct,
+            float(req.budget), int(req.months),
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(502, f"could not run the optimiser: {exc}") from exc
+    # Preserve the preset's own name and blurb, which the cache key drops.
+    return {**payload, "scenario": {**payload["scenario"], **sc.to_dict()}}
+
+
+@app.post("/api/optimize")
+def optimize_endpoint(req: OptimizeRequest) -> dict:
+    """The plan and the comparison. Ask /api/brief for the prose."""
+    payload = _optimize_payload(req)
     payload["brief"] = llm.generate(payload) if req.explain else None
     return payload
+
+
+@app.post("/api/brief")
+def brief_endpoint(req: OptimizeRequest) -> dict:
+    """The written brief for a plan already computed by /api/optimize.
+
+    Split out because the optimiser is fast and the language model is not.
+    Fetching them together makes the whole page wait on the slowest part; the
+    memoised search above means asking twice costs nothing.
+    """
+    return {"brief": llm.generate(_optimize_payload(req))}
 
 
 @app.post("/api/adversarial")

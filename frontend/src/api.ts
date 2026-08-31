@@ -120,6 +120,7 @@ export type Brief = {
   reasoning: string;
   tradeoffs: string;
   source: string;
+  model?: string | null;
   fallback_reason?: string;
 };
 
@@ -194,8 +195,14 @@ export const api = {
       "/api/simulate",
       { ...a, scenario, months },
     ),
+  // The optimiser is fast and the language model is not, so they are fetched
+  // separately: the plan renders straight away and the prose arrives after.
   optimize: (a: AreaSpec, scenario: ScenarioSpec, budget: number, months = 60) =>
-    post<OptimizeResponse>("/api/optimize", { ...a, scenario, budget, months }),
+    post<OptimizeResponse>("/api/optimize", {
+      ...a, scenario, budget, months, explain: false,
+    }),
+  brief: (a: AreaSpec, scenario: ScenarioSpec, budget: number, months = 60) =>
+    post<{ brief: Brief }>("/api/brief", { ...a, scenario, budget, months }),
   adversarial: (a: AreaSpec, budget?: number, months = 60) =>
     post<AdversarialResponse>("/api/adversarial", { ...a, budget, months }),
   assumptions: async () => (await fetch("/api/assumptions")).json(),
