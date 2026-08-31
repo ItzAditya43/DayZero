@@ -261,7 +261,7 @@ def _optimized(
     }
 
 
-def _optimize_payload(req: "OptimizeRequest") -> dict:
+def _optimize_payload(req: OptimizeRequest) -> dict:
     sc = resolve_scenario(req.scenario)
     try:
         payload = _optimized(
