@@ -1,6 +1,18 @@
-# DayZero
+<h1 align="center">DayZero</h1>
 
-### Find your Day Zero. Then buy it back.
+<p align="center"><strong>Find your Day Zero. Then buy it back.</strong></p>
+
+<p align="center">
+  <a href="https://dayzero-cuy1.onrender.com"><img alt="Live demo" src="https://img.shields.io/badge/live-dayzero--cuy1.onrender.com-2dd4bf?style=flat-square"></a>
+  <a href="https://github.com/ItzAditya43/DayZero/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ItzAditya43/DayZero/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-blue?style=flat-square"></a>
+  <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776ab?style=flat-square">
+</p>
+
+<p align="center">
+  <a href="https://dayzero-cuy1.onrender.com"><img src="docs/hero.png" alt="DayZero stress-testing central Bengaluru" width="100%"></a>
+</p>
+
 
 In 2018 Cape Town counted down to **Day Zero** — the date the taps would be
 shut off. Every city has one. Most have never calculated it.
@@ -16,11 +28,12 @@ It is not a dashboard and not a forecast. It answers one question:
 > *When does this place run out of water, and what is the cheapest way to buy
 > those months back?*
 
-**Live: [dayzero-cuy1.onrender.com](https://dayzero-cuy1.onrender.com)**
-· Built for **NextStep Hacks 2026** · *Earth Forward*.
+### ▶ Try it: **[dayzero-cuy1.onrender.com](https://dayzero-cuy1.onrender.com)**
 
-> The free instance sleeps after 15 minutes of inactivity. If the first load
-> hangs, give it ~50 seconds to wake.
+Built for **NextStep Hacks 2026** · *Earth Forward*.
+
+> Hosted on a free instance that sleeps after 15 minutes idle. If the first
+> load hangs, give it ~50 seconds to wake — after that it is instant.
 
 ---
 
@@ -107,6 +120,10 @@ The headline result on the demo location (Bengaluru, extreme scenario):
 
 At ₹2 cr DayZero buys **11 more months for 37% less money**, and hands back
 ₹73 lakh of the budget.
+
+<p align="center">
+  <img src="docs/plan.png" alt="The funded plan, the greedy comparison, and the generated decision brief" width="380">
+</p>
 
 **Greedy gets worse when given more money.** At ₹1.5 cr its ranking buys
 managed aquifer recharge (10 months to deploy). At ₹2.0 cr the extra budget
