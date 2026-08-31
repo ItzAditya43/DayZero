@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+node_modules/
+frontend/dist/
+
+.env
+*.log
+
+# The demo cache IS committed on purpose -- see README. Ignore nothing here.

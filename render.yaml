@@ -1,0 +1,20 @@
+# One-click deploy on Render: New > Blueprint > connect this repo.
+# The free instance sleeps after 15 minutes of inactivity and takes ~50s to
+# wake, so keep it warm during judging (see README).
+services:
+  - type: web
+    name: dayzero
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: singapore
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: "7860"
+      # Optional. Without any of these the app still works -- the decision
+      # brief falls back to a deterministic template.
+      - key: OLLAMA_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
