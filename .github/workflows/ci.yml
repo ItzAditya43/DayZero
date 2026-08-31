@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  backend:
+    name: Simulation and optimiser tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --dev
+      # The tests build a synthetic region, so they never touch the network.
+      - run: uv run pytest -q
+      - run: uv run --with ruff ruff check --select E9,F63,F7,F82 dayzero tests scripts
+
+  frontend:
+    name: Frontend typecheck and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+
+  image:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Proves the deployable artefact is green, not just the source.
+      - run: docker build -t dayzero:ci .
+      - name: Container serves the API and the built frontend
+        run: |
+          docker run -d --name dz -p 7860:7860 dayzero:ci
+          for _ in $(seq 1 40); do
+            curl -sf http://127.0.0.1:7860/api/health && break || sleep 2
+          done
+          curl -sf http://127.0.0.1:7860/api/health | grep -q '"ok":true'
+          curl -sf -o /dev/null -w '%{http_code}\n' http://127.0.0.1:7860/ | grep -q 200
+          docker rm -f dz
