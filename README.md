@@ -246,6 +246,19 @@ A deployed server has no local Ollama. Give it a key from
 [ollama.com/settings/keys](https://ollama.com/settings/keys) as `OLLAMA_API_KEY`
 and it reaches the same cloud models.
 
+### The numbers never wait on the prose
+
+The optimiser is fast; a language model is not. Fetching both in one request
+meant the whole page waited on the slowest part — 37 seconds on a free
+instance, of which 11 was the search and 25 was the model.
+
+So they are two endpoints. `/api/optimize` returns the plan and the comparison
+table; `/api/brief` returns the prose. The search is memoised on the exact
+request, so asking twice costs nothing, and the frontend renders the plan
+immediately and fills the brief in behind it. On the deployed free instance
+that is **~6s to the plan, brief a few seconds later** — and a model that is
+slow, rate-limited or down can no longer delay the result at all.
+
 ### It also works with no LLM at all
 
 If every backend is unreachable or out of quota, a **deterministic template
